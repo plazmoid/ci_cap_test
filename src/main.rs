@@ -15,13 +15,11 @@ use warp::{
     Filter, Rejection, Reply,
 };
 
-use crate::models::ws::KlineResponse;
-
 const BINANCE_WS_URL: &str = "wss://fstream.binance.com/stream";
 
 async fn handle_ws(ws: Ws) -> Result<impl Reply, Rejection> {
     Ok(ws.on_upgrade(move |websocket| async move {
-        let mut rates = HashMap::<String, ws::KlineResponse>::new();
+        let mut rates = HashMap::<String, ws::ClientResponse>::new();
         let (mut sink, mut stream) = websocket.split();
         let (binance_ws_stream, _) = connect_async(BINANCE_WS_URL)
             .await
@@ -58,10 +56,10 @@ async fn handle_ws(ws: Ws) -> Result<impl Reply, Rejection> {
 
                 dbg!(&raw_resp);
 
-                let response = serde_json::from_str::<KlineResponse>(&raw_resp).unwrap();
+                let response = serde_json::from_str::<ws::BinanceResponse>(&raw_resp).unwrap();
                 let pair = response.stream.split('@').next().unwrap().to_string();
 
-                rates.insert(pair, response);
+                rates.insert(pair, ws::ClientResponse::from(response));
 
                 if rates.len() == all_required_pairs.len() {
                     let mut result_rates =

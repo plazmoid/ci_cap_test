@@ -48,9 +48,9 @@ pub fn get_all_variables_from_ast(node: &ParserAST<'_>) -> Vec<String> {
 
 pub fn eval_ast_with(
     node: &ParserAST<'_>,
-    vals: &HashMap<String, ws::KlineResponse>,
-) -> Option<ws::KlineResponse> {
-    let mut result: Option<ws::KlineResponse> = None;
+    vals: &HashMap<String, ws::ClientResponse>,
+) -> Option<ws::ClientResponse> {
+    let mut result: Option<ws::ClientResponse> = None;
 
     match &node.extra {
         Expr::Variable => {
@@ -61,35 +61,34 @@ pub fn eval_ast_with(
             let lhs = eval_ast_with(&*lhs, vals)?;
             let rhs = eval_ast_with(&*rhs, vals)?;
 
-            let mut kline_result: ws::KlineResponse = ws::KlineResponse::default();
-            kline_result.data.event_time = u64::max(lhs.data.event_time, rhs.data.event_time);
-            kline_result.data.event_type = lhs.data.event_type;
-            kline_result.data.symbol = lhs.data.symbol;
+            let mut kline_result = ws::ClientResponse::default();
+            kline_result.data.kline_start_time =
+                u64::max(lhs.data.kline_start_time, rhs.data.kline_start_time);
             match op.extra {
                 BinaryOp::Add => {
-                    kline_result.data.k.open = lhs.data.k.open + rhs.data.k.open;
-                    kline_result.data.k.high = lhs.data.k.high + rhs.data.k.high;
-                    kline_result.data.k.low = lhs.data.k.low + rhs.data.k.low;
-                    kline_result.data.k.close = lhs.data.k.close + rhs.data.k.close;
+                    kline_result.data.open = lhs.data.open + rhs.data.open;
+                    kline_result.data.high = lhs.data.high + rhs.data.high;
+                    kline_result.data.low = lhs.data.low + rhs.data.low;
+                    kline_result.data.close = lhs.data.close + rhs.data.close;
                 }
                 BinaryOp::Sub => {
-                    kline_result.data.k.open = lhs.data.k.open - rhs.data.k.open;
-                    kline_result.data.k.high = lhs.data.k.high - rhs.data.k.high;
-                    kline_result.data.k.low = lhs.data.k.low - rhs.data.k.low;
-                    kline_result.data.k.close = lhs.data.k.close - rhs.data.k.close;
+                    kline_result.data.open = lhs.data.open - rhs.data.open;
+                    kline_result.data.high = lhs.data.high - rhs.data.high;
+                    kline_result.data.low = lhs.data.low - rhs.data.low;
+                    kline_result.data.close = lhs.data.close - rhs.data.close;
                 }
                 BinaryOp::Mul => {
-                    kline_result.data.k.open = lhs.data.k.open * rhs.data.k.open;
-                    kline_result.data.k.high = lhs.data.k.high * rhs.data.k.high;
-                    kline_result.data.k.low = lhs.data.k.low * rhs.data.k.low;
-                    kline_result.data.k.close = lhs.data.k.close * rhs.data.k.close;
+                    kline_result.data.open = lhs.data.open * rhs.data.open;
+                    kline_result.data.high = lhs.data.high * rhs.data.high;
+                    kline_result.data.low = lhs.data.low * rhs.data.low;
+                    kline_result.data.close = lhs.data.close * rhs.data.close;
                 }
                 BinaryOp::Div => {
                     // todo /0
-                    kline_result.data.k.open = lhs.data.k.open / rhs.data.k.open;
-                    kline_result.data.k.high = lhs.data.k.high / rhs.data.k.high;
-                    kline_result.data.k.low = lhs.data.k.low / rhs.data.k.low;
-                    kline_result.data.k.close = lhs.data.k.close / rhs.data.k.close;
+                    kline_result.data.open = lhs.data.open / rhs.data.open;
+                    kline_result.data.high = lhs.data.high / rhs.data.high;
+                    kline_result.data.low = lhs.data.low / rhs.data.low;
+                    kline_result.data.close = lhs.data.close / rhs.data.close;
                 }
                 _ => unimplemented!(),
             }
@@ -103,7 +102,7 @@ pub fn eval_ast_with(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::ws::KlineResponse;
+    use crate::models::ws::ClientResponse;
     use bigdecimal::BigDecimal;
 
     #[test]
@@ -117,23 +116,23 @@ mod tests {
     fn eval_ast() {
         let big = |n| BigDecimal::try_from(n).unwrap();
 
-        let mut btcusdt = KlineResponse::default();
-        btcusdt.data.k.open = big(5.9);
-        btcusdt.data.k.high = big(10.3);
-        btcusdt.data.k.low = big(5.9);
-        btcusdt.data.k.close = big(7.1);
+        let mut btcusdt = ClientResponse::default();
+        btcusdt.data.open = big(5.9);
+        btcusdt.data.high = big(10.3);
+        btcusdt.data.low = big(5.9);
+        btcusdt.data.close = big(7.1);
 
-        let mut ethusdt = KlineResponse::default();
-        ethusdt.data.k.open = big(105.0);
-        ethusdt.data.k.high = big(107.3);
-        ethusdt.data.k.low = big(102.1);
-        ethusdt.data.k.close = big(104.6);
+        let mut ethusdt = ClientResponse::default();
+        ethusdt.data.open = big(105.0);
+        ethusdt.data.high = big(107.3);
+        ethusdt.data.low = big(102.1);
+        ethusdt.data.close = big(104.6);
 
-        let mut bnbusdt = KlineResponse::default();
-        bnbusdt.data.k.open = big(50.1);
-        bnbusdt.data.k.high = big(51.3);
-        bnbusdt.data.k.low = big(50.0);
-        bnbusdt.data.k.close = big(52.4);
+        let mut bnbusdt = ClientResponse::default();
+        bnbusdt.data.open = big(50.1);
+        bnbusdt.data.high = big(51.3);
+        bnbusdt.data.low = big(50.0);
+        bnbusdt.data.close = big(52.4);
 
         let vals = HashMap::from([
             ("btcusdt".to_string(), btcusdt),
@@ -144,9 +143,9 @@ mod tests {
         let req = parse_stream_request("btcusdt+(ethusdt-bnbusdt)@1m").unwrap();
         let result = eval_ast_with(&req.request, &vals).unwrap();
 
-        assert_eq!(result.data.k.open, big(60.8));
-        assert_eq!(result.data.k.high, big(66.3));
-        assert_eq!(result.data.k.low, big(58.0));
-        assert_eq!(result.data.k.close, big(59.3));
+        assert_eq!(result.data.open, big(60.8));
+        assert_eq!(result.data.high, big(66.3));
+        assert_eq!(result.data.low, big(58.0));
+        assert_eq!(result.data.close, big(59.3));
     }
 }

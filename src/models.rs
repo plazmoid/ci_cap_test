@@ -25,13 +25,28 @@ pub mod ws {
         pub params: Vec<WsStream>,
     }
 
-    #[derive(Clone, Debug, Serialize, Deserialize, Default)]
+    #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct BinanceResponse {
         pub stream: WsStream,
         pub data: BinanceResponseData,
     }
 
-    #[derive(Clone, Debug, Serialize, Deserialize, Default)]
+    #[derive(Clone, Debug, Serialize, Default)]
+    pub struct ClientResponse {
+        pub stream: WsStream,
+        pub data: Rates,
+    }
+
+    impl From<BinanceResponse> for ClientResponse {
+        fn from(resp: BinanceResponse) -> Self {
+            Self {
+                stream: resp.stream,
+                data: resp.data.k,
+            }
+        }
+    }
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct BinanceResponseData {
         #[serde(rename = "e")]
         pub event_type: String,
@@ -42,11 +57,14 @@ pub mod ws {
         #[serde(rename = "s")]
         pub symbol: String,
 
-        pub k: BinanceResponseDataKline,
+        pub k: Rates,
     }
 
     #[derive(Clone, Debug, Serialize, Deserialize, Default)]
-    pub struct BinanceResponseDataKline {
+    pub struct Rates {
+        #[serde(rename = "t")]
+        pub kline_start_time: u64,
+
         #[serde(rename = "o")]
         pub open: BigDecimal,
 
@@ -59,8 +77,6 @@ pub mod ws {
         #[serde(rename = "c")]
         pub close: BigDecimal,
     }
-
-    pub type KlineResponse = BinanceResponse;
 
     #[derive(Debug)]
     pub struct StreamRequestAST<'a> {
