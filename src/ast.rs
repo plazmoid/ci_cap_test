@@ -5,6 +5,7 @@ use arithmetic_parser::{
     grammars::{F32Grammar, Parse, Untyped},
     BinaryOp, Expr, ExprType, LocatedSpan,
 };
+use bigdecimal::BigDecimal;
 
 pub type ParserAST<'a> = LocatedSpan<&'a str, Expr<'a, Untyped<F32Grammar>>>;
 
@@ -84,11 +85,12 @@ pub fn eval_ast_with(
                     kline_result.data.close = lhs.data.close * rhs.data.close;
                 }
                 BinaryOp::Div => {
-                    // todo /0
-                    kline_result.data.open = lhs.data.open / rhs.data.open;
-                    kline_result.data.high = lhs.data.high / rhs.data.high;
-                    kline_result.data.low = lhs.data.low / rhs.data.low;
-                    kline_result.data.close = lhs.data.close / rhs.data.close;
+                    let checked_div =
+                        |l, r: BigDecimal| if r == BigDecimal::from(0) { r } else { l / r };
+                    kline_result.data.open = checked_div(lhs.data.open, rhs.data.open);
+                    kline_result.data.high = checked_div(lhs.data.high, rhs.data.high);
+                    kline_result.data.low = checked_div(lhs.data.low, rhs.data.low);
+                    kline_result.data.close = checked_div(lhs.data.close, rhs.data.close);
                 }
                 _ => unimplemented!(),
             }
