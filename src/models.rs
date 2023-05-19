@@ -25,14 +25,14 @@ pub mod ws {
         pub params: Vec<WsStream>,
     }
 
-    #[derive(Debug, Deserialize)]
-    pub struct BinanceResponse<D> {
+    #[derive(Clone, Debug, Serialize, Deserialize, Default)]
+    pub struct BinanceResponse {
         pub stream: WsStream,
-        pub data: BinanceResponseData<D>,
+        pub data: BinanceResponseData,
     }
 
-    #[derive(Debug, Deserialize)]
-    pub struct BinanceResponseData<D> {
+    #[derive(Clone, Debug, Serialize, Deserialize, Default)]
+    pub struct BinanceResponseData {
         #[serde(rename = "e")]
         pub event_type: String,
 
@@ -42,11 +42,10 @@ pub mod ws {
         #[serde(rename = "s")]
         pub symbol: String,
 
-        #[serde(flatten)]
-        pub inner: D,
+        pub k: BinanceResponseDataKline,
     }
 
-    #[derive(Debug, Deserialize)]
+    #[derive(Clone, Debug, Serialize, Deserialize, Default)]
     pub struct BinanceResponseDataKline {
         #[serde(rename = "o")]
         pub open: BigDecimal,
@@ -61,7 +60,7 @@ pub mod ws {
         pub close: BigDecimal,
     }
 
-    pub type KlineResponse = BinanceResponse<BinanceResponseDataKline>;
+    pub type KlineResponse = BinanceResponse;
 
     #[derive(Debug)]
     pub struct StreamRequestAST<'a> {
