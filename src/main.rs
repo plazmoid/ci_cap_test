@@ -54,8 +54,6 @@ async fn handle_ws(ws: Ws) -> Result<impl Reply, Rejection> {
                     continue;
                 }
 
-                dbg!(&raw_resp);
-
                 let response = serde_json::from_str::<ws::BinanceResponse>(&raw_resp).unwrap();
                 let pair = response.stream.split('@').next().unwrap().to_string();
 
